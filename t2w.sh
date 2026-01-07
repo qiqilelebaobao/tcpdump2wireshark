@@ -134,8 +134,6 @@ capture_and_open(){
     local SLEEP_TIME=${4:-"3"}
     local RETVAL=0
 
-
-
     check_wait_time_if_int "$CAP_TIME" || { echo "❌ 输入失败: 输入时间应为正整数 $CAP_TIME" >&2; return 1;}
 
     check_ip_or_port "$CAP_HOST_OR_PORT"
