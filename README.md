@@ -4,9 +4,6 @@ Remote tcpdump → copy pcap → open in Wireshark (simple SSH helper script)
 
 A small helper script (t2w.sh) to remotely run tcpdump over SSH on a host, copy the resulting pcap to the local machine and open it with the default GUI packet viewer (e.g., Wireshark).
 
-脚本作者: qiqilelebaobao  
-脚本文件: `t2w.sh`
-
 ---
 
 ## 简介
@@ -66,35 +63,6 @@ Shell 要求：
 
 ---
 
-## 脚本行为（概述）
-
-1. 校验第三个参数（CAPTURE_TIME_SECONDS）是否为非负整数。
-2. 识别第二个参数是 IPv4 地址还是端口（或既不是两者则报错退出）。
-   - IP 检查使用正则匹配 IPv4 格式（注意：脚本中对每段的 0-255 检查有注释但被注释掉了）。
-   - 检测当前 Shell (`SHELL`) 是否为 `/bin/bash` 或 `/bin/zsh`，否则会打印提示并当成非法输入。
-3. 通过 SSH 在远端运行 tcpdump：
-   - 远端文件名: `/tmp/${HOST}_YYYY-MM-DD_HH:MM:SS.pcap`
-   - 运行的 tcpdump 命令会剔除 SSH 客户端的端口（从 `SSH_CLIENT` 环境变量中获取）以避免抓到 SSH 本身流量。
-   - 若指定了 CAPTURE_TIME_SECONDS > 0，使用 `timeout` 在指定秒数后自动终止 tcpdump。
-4. 抓包结束后（或被 timeout 结束），使用 `scp` 将远端 pcap 拷贝到本地 `/tmp/...pcap`。
-5. 使用 `open`（macOS）或 `xdg-open`（Linux）打开该 pcap 文件（由系统的默认应用处理，通常是 Wireshark）。
-
----
-
-## 返回值 / 退出码
-
-脚本会通过退出码告知不同类型的失败：
-- 0 - 成功
-- 1 - 输入时间无效（非整数）
-- 2 - 输入目标无效（既不是 IPv4 也不是端口）
-- 3 - 抓包失败（tcpdump SSH 命令返回非 0，若返回 124 表示 timeout）
-- 4 - 拷贝失败（scp 失败）
-- 5 - 打开文件失败（open/xdg-open 失败）
-
-脚本运行时也会打印一些带 emoji 的提示信息用于辅助定位问题（例如 ❌、❗、🎯、✅、🔄 等）。
-
----
-
 ## 常见问题与排错
 
 - 抓包权限被拒绝 / tcpdump: permission denied
@@ -139,4 +107,3 @@ Shell 要求：
 
 如需改进脚本（例如增加 sudo 支持、改用 `ssh -t sudo tcpdump ...`、在远端自动清理临时文件、支持 IPv6、或修复 IPv4 每段 0-255 的严格校验），欢迎提交 PR 或在 issue 中讨论。
 
-许可证请查看仓库根目录（如果有 LICENSE 文件）。
