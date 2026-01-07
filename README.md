@@ -63,23 +63,6 @@ Shell 要求：
 
 ---
 
-## 常见问题与排错
-
-- 抓包权限被拒绝 / tcpdump: permission denied
-  - tcpdump 通常需要 root 权限。可在远端：
-    - 使用 sudo（则需要在脚本中修改 SSH 命令为 `sudo tcpdump ...` 或以 root 用户 SSH）
-    - 或为 tcpdump 二进制设置能力，例如：`sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump`
-- `timeout` 未找到或无效
-  - 若使用了 CAPTURE_TIME_SECONDS>0，远端需要有 `timeout` 命令（GNU coreutils）。若没有，可以在远端安装或手动通过 `Ctrl+C` 停止。
-- scp 拷贝失败
-  - 检查 SSH 认证、目标路径是否存在、磁盘空间及权限。
-- 打不开 pcap（本地）
-  - 检查系统有没有关联 .pcap 的默认程序（Wireshark）。在 Linux 上 `xdg-open` 需要可用的桌面环境和默认应用。
-- `SHELL` 不是 /bin/bash 或 /bin/zsh
-  - 脚本中对 IPv4 字符串分割使用了 bash/zsh 专用语法。建议使用 bash 或 zsh 运行脚本（例如 `bash ./t2w.sh ...`）。
-
----
-
 ## 安全与建议
 
 - 远端执行 tcpdump 会生成 pcap 文件在 `/tmp`，应注意清理历史文件，避免泄露敏感数据。
