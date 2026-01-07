@@ -1,5 +1,7 @@
 # tcpdump2wireshark
 
+Remote tcpdump → copy pcap → open in Wireshark (simple SSH helper script)
+
 A small helper script (t2w.sh) to remotely run tcpdump over SSH on a host, copy the resulting pcap to the local machine and open it with the default GUI packet viewer (e.g., Wireshark).
 
 脚本作者: qiqilelebaobao  
@@ -10,6 +12,9 @@ A small helper script (t2w.sh) to remotely run tcpdump over SSH on a host, copy 
 ## 简介
 
 `t2w.sh` 通过 SSH 在远端主机上运行 tcpdump（抓包），将生成的 pcap 文件拷贝回本地 /tmp 并自动用系统默认的程序打开（macOS 使用 `open`，Linux 使用 `xdg-open`）。脚本会排除当前 SSH 会话的端口，避免把 SSH 自己的流量包含进抓包。
+
+本仓库简短说明（About）：
+- t2w.sh runs tcpdump on a remote host over SSH, copies the generated .pcap to /tmp on your machine, and opens it with the system default pcap viewer (e.g., Wireshark). Designed for quick remote capture and analysis.
 
 ---
 
@@ -134,3 +139,4 @@ Shell 要求：
 
 如需改进脚本（例如增加 sudo 支持、改用 `ssh -t sudo tcpdump ...`、在远端自动清理临时文件、支持 IPv6、或修复 IPv4 每段 0-255 的严格校验），欢迎提交 PR 或在 issue 中讨论。
 
+许可证请查看仓库根目录（如果有 LICENSE 文件）。
