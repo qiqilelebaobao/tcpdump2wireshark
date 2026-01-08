@@ -31,9 +31,6 @@ A small helper script (t2w.sh) to remotely run tcpdump over SSH on a host, copy 
 Shell 要求：
 - 脚本对 `SHELL` 环境变量有简要判断，推荐在 `/bin/bash` 或 `/bin/zsh` 下运行脚本以获得最佳兼容性。
 
-注意：
-- `tcpdump` 通常需要 root 权限。如果远端不能以当前用户直接运行 `tcpdump`，请在远端允许非特权用户抓包（例如通过 `setcap`）或者在远端允许 sudo 的方式（如果修改脚本以使用 sudo）。
-
 ---
 
 ## 用法
@@ -65,8 +62,6 @@ Shell 要求：
 
 ## 安全与建议
 
-- 远端执行 tcpdump 会生成 pcap 文件在 `/tmp`，应注意清理历史文件，避免泄露敏感数据。
-- 如果想在本地直接以 Wireshark 打开而不是依赖系统默认应用，可以将 `open_file` 函数修改为直接调用 `wireshark -r "$LOCAL_FILE_NAME"`（或 `wireshark-gtk` / `shark`，取决于系统）。
 - 当前脚本使用带时间戳的文件名，文件名中包含冒号（`:`），在某些文件系统或环境（Windows）可能不兼容。若需要跨平台兼容，可改用不含冒号的时间格式（例如 `%F_%H-%M-%S`）。
 
 ---
@@ -88,5 +83,5 @@ Shell 要求：
 
 ## 致谢 / 贡献
 
-如需改进脚本（例如增加 sudo 支持、改用 `ssh -t sudo tcpdump ...`、在远端自动清理临时文件、支持 IPv6、或修复 IPv4 每段 0-255 的严格校验），欢迎提交 PR 或在 issue 中讨论。
+如需改进脚本, 欢迎提交 PR 或在 issue 中讨论。
 
