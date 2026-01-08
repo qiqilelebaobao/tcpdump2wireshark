@@ -4,19 +4,25 @@ Remote tcpdump → copy pcap → open in Wireshark (SSH helper script)
 
 远程 tcpdump → 复制 pcap → 在 Wireshark 中打开（SSH 辅助脚本）
 
-Description / 简介
+---
+
+## Description / 简介
 
 A minimal helper script (t2w.sh) that runs tcpdump remotely over SSH, copies the captured .pcap back to /tmp on the local machine, and opens it with the system default pcap viewer (e.g., Wireshark). On macOS it uses `open`; on Linux it uses `xdg-open`.
 
 一个简洁的辅助脚本（t2w.sh），通过 SSH 在远端运行 tcpdump，抓取到的 .pcap 会被复制到本地 /tmp，并用系统默认的 pcap 查看器（如 Wireshark）打开。macOS 使用 `open`，Linux 使用 `xdg-open`。
 
-About / 关于
+---
+
+## About / 关于
 
 Designed for quick remote captures and local inspection. It is intended as a convenience tool for administrators and engineers who need to fetch and inspect packet captures from remote hosts.
 
 用于快速远程抓包并在本地检查。适合需要从远程主机获取并分析抓包的运维或工程人员。
 
-Requirements / 依赖
+---
+
+## Requirements / 依赖
 
 Remote host requirements:
 - SSH access (`ssh` available)
@@ -46,7 +52,9 @@ The script performs minimal checks on the `SHELL` environment variable. Running 
 
 脚本仅对 `SHELL` 环境变量做简单判断。推荐在 `/bin/bash` 或 `/bin/zsh` 下运行以获得最佳兼容性。
 
-Usage / 用法
+---
+
+## Usage / 用法
 
 Basic syntax:
 ```
@@ -93,20 +101,19 @@ Examples / 示例
 ./t2w.sh
 ```
 
-Security & Recommendations / 安全与建议
+---
+
+## Security & Recommendations / 安全与建议
 
 The script uses timestamped filenames which may include colons (`:`). These characters can be incompatible with some filesystems (e.g., Windows). For cross-platform compatibility, consider using a timestamp format without colons.
 
 脚本使用带时间戳的文件名，可能包含冒号（`:`）。某些文件系统（如 Windows）不兼容冒号。若需跨平台兼容，建议使用不含冒号的时间戳格式。
 
-Contributing / 致谢与贡献
+---
+
+## Contributing / 致谢与贡献
 
 Contributions, bug reports, and enhancements are welcome. Please open an issue before submitting a pull request to discuss major changes.
 
 欢迎贡献、报告 bug 或提出改进。提交重大更改前请先在 issue 中讨论。
 
----
-
-If you want, I can also: refine wording further, split content into separate sections for advanced options, or create a dedicated man page / usage help. Let me know which you prefer.
-
-如果需要，我还可以进一步润色措辞、将内容扩展为高级选项单独章节，或创建独立的 man 页面／使用帮助。请告诉我你的偏好。
