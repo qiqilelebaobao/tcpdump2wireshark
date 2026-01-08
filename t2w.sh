@@ -19,20 +19,12 @@ check_ip_or_port() {
     # 检查是否为 IPv4 地址
     if [[ "$input" =~ $ip_regex ]]; then
         # 检查每个段是否在 0-255 范围内
-        if [[ $SHELL = "/bin/bash" ]]; then
-            IFS='.' read -ra ADDR <<< "$input"
-        elif [[ $SHELL = "/bin/zsh" ]]; then
-            IFS='.' read -rA ADDR <<< "$input"
-        else
-            echo "You are using another shell: $SHELL"
-            return 0
-        fi
-
-#        for i in "${ADDR[@]}"; do
-#            if ((i < 0 || i > 255)); then
-#                return 0
-#            fi
-#        done
+        # IFS='.' read -ra ADDR <<< "$input"
+        # for i in "${ADDR[@]}"; do
+        #     if (("$i" < 0 || "$i" > 255)); then
+        #         return 0
+        #     fi
+        # done
         return 1
     fi
 
@@ -56,7 +48,7 @@ check_ip_or_port() {
 #   0 - 如果输入是正整数或零
 #   1 - 如果输入不是正整数或零
 # =============================================================================
-check_wait_time_if_int(){
+check_wait_time_if_int() {
     if [[ $1 =~ ^(0|[1-9][0-9]*)$ ]]; then
         return 0
     else
@@ -119,7 +111,7 @@ open_file() {
 #   4 - 拷贝失败
 #   5 - 文件打开失败
 # =============================================================================
-capture_and_open(){
+capture_and_open() {
 
     local HOST=${1:-"127.0.0.1"}
     local CAP_HOST_OR_PORT=${2:-"127.0.0.1"}
@@ -131,10 +123,11 @@ capture_and_open(){
     local LOCAL_FILE_NAME="/tmp/${CAP_NAME}.pcap"
 
     local CAP_TIME=${3:-"0"}
-    local SLEEP_TIME=${4:-"3"}
+    local SLEEP_TIME=${4:-"1"}
     local RETVAL=0
 
     check_wait_time_if_int "$CAP_TIME" || { echo "❌ 输入失败: 输入时间应为正整数 $CAP_TIME" >&2; return 1;}
+    check_wait_time_if_int "$SLEEP_TIME" || { echo "❌ 输入失败: 输入等待时间应为整数 $SLEEP_TIME" >&2; return 1;}
 
     check_ip_or_port "$CAP_HOST_OR_PORT"
     local CHECK_RESULT=$?
@@ -148,7 +141,7 @@ capture_and_open(){
     1)
         echo "🎯 开始抓包: 抓包IP $CAP_HOST_OR_PORT ，持续进行，直到ctrl +c 停止..."
         if [[ $CAP_TIME -gt 0 ]]; then
-            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); timeout $CAP_TIME tcpdump -i any -w $REMOTE_FILE_NAME host $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
+            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); timeout --foreground $CAP_TIME tcpdump -i any -w $REMOTE_FILE_NAME host $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
         else
             ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); tcpdump -i any -w $REMOTE_FILE_NAME host $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
         fi
@@ -156,7 +149,7 @@ capture_and_open(){
     2)
         echo "🎯 开始抓包: 抓包端口 $CAP_HOST_OR_PORT ，持续进行，直到ctrl +c 停止..."
         if [[ $CAP_TIME -gt 0 ]]; then
-            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); timeout $CAP_TIME tcpdump -i any -w $REMOTE_FILE_NAME port $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
+            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); timeout --foreground $CAP_TIME tcpdump -i any -w $REMOTE_FILE_NAME port $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
         else
             ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); tcpdump -i any -w $REMOTE_FILE_NAME port $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
         fi
@@ -170,9 +163,7 @@ capture_and_open(){
         echo "❗ 抓包失败: tcpdump 退出码为$RETVAL" >&2
         return 3
     fi
-
-    check_wait_time_if_int "$SLEEP_TIME" || { echo "❌ 输入失败: 输入等待时间应为整数 $SLEEP_TIME" >&2; return 1;}
-    echo ""
+    sleep "$SLEEP_TIME"
 
     # phase2 copy
     printf "🎯 开始拷贝: 来自主机 %s \n🎯 远程文件名：%s -> 本地文件名：%s \n🎯 直到ctrl +c 停止..." "$HOST" "$REMOTE_FILE_NAME" "$LOCAL_FILE_NAME"
