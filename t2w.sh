@@ -141,17 +141,17 @@ capture_and_open() {
     1)
         echo "🎯 开始抓包: 抓包IP $CAP_HOST_OR_PORT ，持续进行，直到ctrl +c 停止..."
         if [[ $CAP_TIME -gt 0 ]]; then
-            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); timeout --foreground $CAP_TIME tcpdump -i any -w $REMOTE_FILE_NAME host $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
+            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); timeout --foreground $CAP_TIME sudo tcpdump -i any -w $REMOTE_FILE_NAME host $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
         else
-            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); tcpdump -i any -w $REMOTE_FILE_NAME host $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
+            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); sudo tcpdump -i any -w $REMOTE_FILE_NAME host $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
         fi
         ;;
     2)
         echo "🎯 开始抓包: 抓包端口 $CAP_HOST_OR_PORT ，持续进行，直到ctrl +c 停止..."
         if [[ $CAP_TIME -gt 0 ]]; then
-            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); timeout --foreground $CAP_TIME tcpdump -i any -w $REMOTE_FILE_NAME port $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
+            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); timeout --foreground $CAP_TIME sudo tcpdump -i any -w $REMOTE_FILE_NAME port $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
         else
-            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); tcpdump -i any -w $REMOTE_FILE_NAME port $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
+            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); sudo tcpdump -i any -w $REMOTE_FILE_NAME port $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
         fi
         ;;
     esac
