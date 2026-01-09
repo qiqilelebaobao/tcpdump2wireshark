@@ -71,7 +71,10 @@ copy_file() {
     local remote_file_name="$2"
     local local_file_name="$3"
 
-    scp -q "${host}:${remote_file_name}" "${local_file_name}" || { echo "❗ 拷贝失败: scp 退出码为 $?，无法从 $host 复制 $remote_file_name" >&2; return 1; }
+    scp -q "${host}:${remote_file_name}" "${local_file_name}" || {
+        echo "❗ 拷贝失败: scp 退出码为 $?，无法从 $host 复制 $remote_file_name" >&2
+        return 1
+    }
     return 0
 }
 
@@ -87,9 +90,15 @@ open_file() {
     local file_name="$1"
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        open -n "$file_name" || { echo "无法打开文件: $file_name" >&2; return 1; }
+        open -n "$file_name" || {
+            echo "无法打开文件: $file_name" >&2
+            return 1
+        }
     else
-        xdg-open "$file_name" || { echo "无法打开文件: $file_name" >&2; return 1; }
+        xdg-open "$file_name" || {
+            echo "无法打开文件: $file_name" >&2
+            return 1
+        }
     fi
 
     return 0
@@ -118,7 +127,7 @@ capture_and_open() {
 
     local CAP_NAME
     CAP_NAME=${HOST}_$(date +%F_%T)
-    
+
     local REMOTE_FILE_NAME="/tmp/${CAP_NAME}.pcap"
     local LOCAL_FILE_NAME="/tmp/${CAP_NAME}.pcap"
 
@@ -126,8 +135,14 @@ capture_and_open() {
     local SLEEP_TIME=${4:-"1"}
     local RETVAL=0
 
-    check_wait_time_if_int "$CAP_TIME" || { echo "❌ 输入失败: 输入时间应为正整数 $CAP_TIME" >&2; return 1;}
-    check_wait_time_if_int "$SLEEP_TIME" || { echo "❌ 输入失败: 输入等待时间应为整数 $SLEEP_TIME" >&2; return 1;}
+    check_wait_time_if_int "$CAP_TIME" || {
+        echo "❌ 输入失败: 输入时间应为正整数 $CAP_TIME" >&2
+        return 1
+    }
+    check_wait_time_if_int "$SLEEP_TIME" || {
+        echo "❌ 输入失败: 输入等待时间应为整数 $SLEEP_TIME" >&2
+        return 1
+    }
 
     check_ip_or_port "$CAP_HOST_OR_PORT"
     local CHECK_RESULT=$?
