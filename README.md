@@ -1,92 +1,119 @@
 # tcpdump2wireshark
 
-Remote tcpdump → copy pcap → open in Wireshark (simple SSH helper script)
+Remote tcpdump → copy pcap → open in Wireshark (SSH helper script)
 
-A small helper script (t2w.sh) to remotely run tcpdump over SSH on a host, copy the resulting pcap to the local machine and open it with the default GUI packet viewer (e.g., Wireshark).
-
----
-
-## 简介
-
-`t2w.sh` 通过 SSH 在远端主机上运行 tcpdump（抓包），将生成的 pcap 文件拷贝回本地 /tmp 并自动用系统默认的程序打开（macOS 使用 `open`，Linux 使用 `xdg-open`）。脚本会排除当前 SSH 会话的端口，避免把 SSH 自己的流量包含进抓包。
-
-本仓库简短说明（About）：
-- t2w.sh runs tcpdump on a remote host over SSH, copies the generated .pcap to /tmp on your machine, and opens it with the system default pcap viewer (e.g., Wireshark). Designed for quick remote capture and analysis.
+远程 tcpdump → 复制 pcap → 在 Wireshark 中打开（SSH 辅助脚本）
 
 ---
 
-## 依赖 / 前提
+## Description / 简介
 
-远程主机需要：
-- 支持通过 SSH 连接（`ssh` 可用）
-- 有 `tcpdump` 可用并且可执行（通常需要 root 权限或为 tcpdump 配置了能力）
-- 有 `timeout`（GNU coreutils）可用（可选，仅当指定抓包时长时需要）
+A minimal helper script (t2w.sh) that runs tcpdump remotely over SSH, copies the captured .pcap back to /tmp on the local machine, and opens it with the system default pcap viewer (e.g., Wireshark). On macOS it uses `open`; on Linux it uses `xdg-open`.
 
-本地机需要：
-- 支持 `scp`（用于复制远程文件）
-- 一个可以打开 pcap 的默认应用（Wireshark 等），以及：
-  - macOS: `open` 命令
-  - Linux: `xdg-open` 命令
-
-Shell 要求：
-- 脚本对 `SHELL` 环境变量有简要判断，推荐在 `/bin/bash` 或 `/bin/zsh` 下运行脚本以获得最佳兼容性。
-
-注意：
-- `tcpdump` 通常需要 root 权限。如果远端不能以当前用户直接运行 `tcpdump`，请在远端允许非特权用户抓包（例如通过 `setcap`）或者在远端允许 sudo 的方式（如果修改脚本以使用 sudo）。
+一个简洁的辅助脚本（t2w.sh），通过 SSH 在远端运行 tcpdump，抓取到的 .pcap 会被复制到本地 /tmp，并用系统默认的 pcap 查看器（如 Wireshark）打开。macOS 使用 `open`，Linux 使用 `xdg-open`。
 
 ---
 
-## 用法
+## About / 关于
 
-基本语法：
-```bash
+Designed for quick remote captures and local inspection. It is intended as a convenience tool for administrators and engineers who need to fetch and inspect packet captures from remote hosts.
+
+用于快速远程抓包并在本地检查。适合需要从远程主机获取并分析抓包的运维或工程人员。
+
+---
+
+## Requirements / 依赖
+
+Remote host requirements:
+- SSH access (`ssh` available)
+- `tcpdump` installed and executable (may require root or capabilities)
+- `timeout` (GNU coreutils) available if a capture duration is specified (optional)
+
+远程主机要求：
+- 可通过 SSH 访问（需安装 `ssh`）
+- 安装并可执行 `tcpdump`（通常需 root 权限或相应能力）
+- 若指定抓包时长，则需 `timeout`（GNU coreutils，可选）
+
+Local machine requirements:
+- `scp` to copy the remote pcap
+- A program to open pcap files (e.g., Wireshark)
+  - macOS: `open`
+  - Linux: `xdg-open`
+
+本地机要求：
+- `scp` 用于复制远程 pcap
+- 可打开 pcap 文件的程序（例如 Wireshark）
+  - macOS: `open`
+  - Linux: `xdg-open`
+
+Shell notes / Shell 要点
+
+The script performs minimal checks on the `SHELL` environment variable. Running under `/bin/bash` or `/bin/zsh` is recommended for best compatibility.
+
+脚本仅对 `SHELL` 环境变量做简单判断。推荐在 `/bin/bash` 或 `/bin/zsh` 下运行以获得最佳兼容性。
+
+---
+
+## Usage / 用法
+
+Basic syntax:
+```
 ./t2w.sh [REMOTE_HOST] [TARGET_IP_OR_PORT] [CAPTURE_TIME_SECONDS] [OPEN_WAIT_SECONDS]
 ```
 
-参数说明：
-- REMOTE_HOST: 远程主机地址或主机名（可选，默认 `127.0.0.1`）
-- TARGET_IP_OR_PORT: 抓包目标，可传 IPv4 地址或端口号（可选，默认 `127.0.0.1`）
-- CAPTURE_TIME_SECONDS: 抓包持续时间（秒）。传 `0` 表示持续抓包直到你在终端按 `Ctrl+C` 停止（可选，默认 `0`）
-- OPEN_WAIT_SECONDS: 打开文件前的等待时间（秒）。当前脚本会校验该值为整数，但本版本并未在流程中使用（保留位，用于未来扩展）（可选，默认 `3`）
+基本语法：
+```
+./t2w.sh [REMOTE_HOST] [TARGET_IP_OR_PORT] [CAPTURE_TIME_SECONDS] [OPEN_WAIT_SECONDS]
+```
 
-举例：
-```bash
-# 在远程 example.com 上抓取目标 IP 10.0.0.5 的流量，持续 60 秒，然后把 /tmp/remote_...pcap 拷回并打开
+Parameters / 参数说明
+- REMOTE_HOST: remote host address or hostname (optional, default `127.0.0.1`)
+- TARGET_IP_OR_PORT: capture target; an IPv4 address or a port number (optional, default `127.0.0.1`)
+- CAPTURE_TIME_SECONDS: capture duration in seconds. Use `0` to capture until stopped with Ctrl+C (optional, default `0`)
+- OPEN_WAIT_SECONDS: seconds to wait before opening the file. Currently validated but not actively used (reserved for future use) (optional, default `3`)
+
+参数说明
+- REMOTE_HOST：远程主机地址或主机名（可选，默认 `127.0.0.1`）
+- TARGET_IP_OR_PORT：抓包目标，IPv4 地址或端口号（可选，默认 `127.0.0.1`）
+- CAPTURE_TIME_SECONDS：抓包时长（秒）。使用 `0` 表示直到 Ctrl+C 停止（可选，默认 `0`）
+- OPEN_WAIT_SECONDS：在打开文件前等待的秒数。当前会校验为整数，但流程中未使用（保留以备将来扩展）（可选，默认 `3`）
+
+Examples / 示例
+```
+# Capture traffic for IP 10.0.0.5 on remote example.com for 60 seconds, then copy back and open
+./t2w.sh example.com 10.0.0.5 60 3
+
+# Capture port 443 traffic on remote 192.168.1.10 until manually stopped
+./t2w.sh 192.168.1.10 443 0
+
+# Local default host: capture localhost 127.0.0.1 until Ctrl+C
+./t2w.sh
+```
+
+```
+# 在远程 example.com 上抓取目标 IP 10.0.0.5 的流量 60 秒，然后拷回并打开
 ./t2w.sh example.com 10.0.0.5 60 3
 
 # 在远程 192.168.1.10 上抓取端口 443 的流量，直到手动停止
 ./t2w.sh 192.168.1.10 443 0
 
-# 在本地(默认)抓取目标 IP 127.0.0.1，持续抓取直到 Ctrl+C
+# 本地默认主机：抓取本机 127.0.0.1 的流量直到 Ctrl+C
 ./t2w.sh
 ```
 
 ---
 
-## 安全与建议
+## Security & Recommendations / 安全与建议
 
-- 远端执行 tcpdump 会生成 pcap 文件在 `/tmp`，应注意清理历史文件，避免泄露敏感数据。
-- 如果想在本地直接以 Wireshark 打开而不是依赖系统默认应用，可以将 `open_file` 函数修改为直接调用 `wireshark -r "$LOCAL_FILE_NAME"`（或 `wireshark-gtk` / `shark`，取决于系统）。
-- 当前脚本使用带时间戳的文件名，文件名中包含冒号（`:`），在某些文件系统或环境（Windows）可能不兼容。若需要跨平台兼容，可改用不含冒号的时间格式（例如 `%F_%H-%M-%S`）。
+The script uses timestamped filenames which may include colons (`:`). These characters can be incompatible with some filesystems (e.g., Windows). For cross-platform compatibility, consider using a timestamp format without colons.
 
----
-
-## 示例（快速参考）
-
-```bash
-# 连到远程 example.com，抓取 10.0.0.5 的流量 30 秒
-./t2w.sh example.com 10.0.0.5 30
-
-# 连到 192.168.0.5，抓取端口 22（SSH）的流量，直到手动停止
-./t2w.sh 192.168.0.5 22 0
-
-# 本地默认主机，抓取本机 127.0.0.1 的流量并打开
-./t2w.sh
-```
+脚本使用带时间戳的文件名，可能包含冒号（`:`）。某些文件系统（如 Windows）不兼容冒号。若需跨平台兼容，建议使用不含冒号的时间戳格式。
 
 ---
 
-## 致谢 / 贡献
+## Contributing / 致谢与贡献
 
-如需改进脚本（例如增加 sudo 支持、改用 `ssh -t sudo tcpdump ...`、在远端自动清理临时文件、支持 IPv6、或修复 IPv4 每段 0-255 的严格校验），欢迎提交 PR 或在 issue 中讨论。
+Contributions, bug reports, and enhancements are welcome. Please open an issue before submitting a pull request to discuss major changes.
+
+欢迎贡献、报告 bug 或提出改进。提交重大更改前请先在 issue 中讨论。
 
