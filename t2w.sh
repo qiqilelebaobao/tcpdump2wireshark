@@ -57,6 +57,26 @@ check_wait_time_if_int() {
 }
 
 # =============================================================================
+# 验证整数参数并输出错误信息
+# 参数：
+#   $1 - 输入的值
+#   $2 - 参数描述（用于错误信息）
+# 返回值：
+#   0 - 验证成功
+#   1 - 验证失败
+# =============================================================================
+validate_integer_parameter() {
+    local value="$1"
+    local param_description="$2"
+    
+    check_wait_time_if_int "$value" || {
+        echo "❌ 输入失败: $param_description 应为正整数 $value" >&2
+        return 1
+    }
+    return 0
+}
+
+# =============================================================================
 # 执行拷贝操作
 # 参数：
 #   $1 - 远程主机地址
@@ -88,18 +108,18 @@ copy_file() {
 # =============================================================================
 open_file() {
     local file_name="$1"
+    local open_cmd
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        open -n "$file_name" || {
-            echo "无法打开文件: $file_name" >&2
-            return 1
-        }
+        open_cmd="open -n"
     else
-        xdg-open "$file_name" || {
-            echo "无法打开文件: $file_name" >&2
-            return 1
-        }
+        open_cmd="xdg-open"
     fi
+
+    $open_cmd "$file_name" || {
+        echo "无法打开文件: $file_name" >&2
+        return 1
+    }
 
     return 0
 }
@@ -111,6 +131,81 @@ check_live() {
     else
         return 1
     fi
+}
+
+# =============================================================================
+# 构建 tcpdump 过滤器字符串
+# 参数：
+#   $1 - check_ip_or_port 的返回值 (0=其他, 1=IP, 2=端口)
+#   $2 - 目标值（IP地址、端口或其他）
+#   $3 - 是否需要排除客户端端口 (0=需要, 1=不需要)
+# 返回值：
+#   输出过滤器字符串
+# =============================================================================
+build_tcpdump_filter() {
+    local check_result="$1"
+    local target="$2"
+    local exclude_client_port="$3"
+    
+    case $check_result in
+    0)
+        echo "$target"
+        ;;
+    1)
+        if [[ "$exclude_client_port" == "0" ]]; then
+            echo "host $target and not port \$CLIENT_PORT"
+        else
+            echo "host $target"
+        fi
+        ;;
+    2)
+        if [[ "$exclude_client_port" == "0" ]]; then
+            echo "port $target and not port \$CLIENT_PORT"
+        else
+            echo "port $target"
+        fi
+        ;;
+    esac
+}
+
+# =============================================================================
+# 执行实时抓包并传输到 Wireshark
+# 参数：
+#   $1 - 主机地址
+#   $2 - tcpdump 过滤器字符串
+# 返回值：
+#   SSH 命令的退出码
+# =============================================================================
+execute_live_capture() {
+    local host="$1"
+    local filter="$2"
+    
+    echo "🎯 开始抓包: 实时抓包，持续进行，直到ctrl +c 停止..."
+    ssh -q "$host" "sudo tcpdump -s 0 -U -i any $filter -w -" | wireshark -k -i -
+}
+
+# =============================================================================
+# 执行 SSH tcpdump 命令（带可选超时）
+# 参数：
+#   $1 - 主机地址
+#   $2 - 抓包时长（0 表示持续直到 Ctrl+C）
+#   $3 - 远程文件名
+#   $4 - tcpdump 过滤器字符串
+# 返回值：
+#   SSH 命令的退出码
+# =============================================================================
+execute_ssh_tcpdump() {
+    local host="$1"
+    local cap_time="$2"
+    local remote_file="$3"
+    local filter="$4"
+    
+    local timeout_cmd=""
+    if [[ $cap_time -gt 0 ]]; then
+        timeout_cmd="timeout $cap_time"
+    fi
+    
+    ssh -q -tt "$host" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); $timeout_cmd sudo tcpdump -i any -w $remote_file $filter"
 }
 
 # =============================================================================
@@ -145,14 +240,9 @@ capture_and_open() {
     local IF_LIVE=${5:-"not_live"}
     local RETVAL=0
 
-    check_wait_time_if_int "$CAP_TIME" || {
-        echo "❌ 输入失败: 输入时间应为正整数 $CAP_TIME" >&2
-        return 1
-    }
-    check_wait_time_if_int "$SLEEP_TIME" || {
-        echo "❌ 输入失败: 输入等待时间应为整数 $SLEEP_TIME" >&2
-        return 1
-    }
+    # 使用新的验证函数，减少重复代码
+    validate_integer_parameter "$CAP_TIME" "输入时间" || return 1
+    validate_integer_parameter "$SLEEP_TIME" "输入等待时间" || return 1
 
     check_live "$IF_LIVE"
     local IS_LIVE=$?
@@ -161,53 +251,33 @@ capture_and_open() {
     local CHECK_RESULT=$?
 
     # phase1 capture
+    # 判断是否为实时模式
+    if [[ $IS_LIVE -eq 0 ]]; then
+        local filter
+        filter=$(build_tcpdump_filter "$CHECK_RESULT" "$CAP_HOST_OR_PORT" "1")
+        execute_live_capture "$HOST" "$filter"
+        return 0
+    fi
+
+    # 非实时模式：构建过滤器并执行抓包
+    local filter
+    filter=$(build_tcpdump_filter "$CHECK_RESULT" "$CAP_HOST_OR_PORT" "0")
+    
     case $CHECK_RESULT in
     0)
-        # echo "❌ 输入失败: 输入参数应为IP地址或者端口" >&2
-        if [[ $IS_LIVE -eq 0 ]]; then
-            echo "🎯 开始抓包: 实时抓包，持续进行，直到ctrl +c 停止..."
-            ssh -q "$HOST" "sudo tcpdump -s 0 -U -i any $CAP_HOST_OR_PORT -w -" | wireshark -k -i -
-            return 0
-        fi
-        if [[ $CAP_TIME -gt 0 ]]; then
-            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); timeout $CAP_TIME sudo tcpdump -i any -w $REMOTE_FILE_NAME $CAP_HOST_OR_PORT"
-        else
-            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); sudo tcpdump -i any -w $REMOTE_FILE_NAME $CAP_HOST_OR_PORT"
-        fi
+        echo "🎯 开始抓包: 抓包，持续进行，直到ctrl +c 停止..."
         ;;
     1)
         echo "🎯 开始抓包: 抓包IP $CAP_HOST_OR_PORT ，持续进行，直到ctrl +c 停止..."
-
-        if [[ $IS_LIVE -eq 0 ]]; then
-            echo "🎯 开始抓包: 实时抓包，持续进行，直到ctrl +c 停止..."
-            ssh -q "$HOST" "sudo tcpdump -s 0 -U -i any host $CAP_HOST_OR_PORT -w -" | wireshark -k -i -
-            return 0
-        fi
-
-        if [[ $CAP_TIME -gt 0 ]]; then
-            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); timeout $CAP_TIME sudo tcpdump -i any -w $REMOTE_FILE_NAME host $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
-        else
-            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); sudo tcpdump -i any -w $REMOTE_FILE_NAME host $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
-        fi
         ;;
     2)
         echo "🎯 开始抓包: 抓包端口 $CAP_HOST_OR_PORT ，持续进行，直到ctrl +c 停止..."
-        if [[ $IS_LIVE -eq 0 ]]; then
-            echo "🎯 开始抓包: 实时抓包，持续进行，直到ctrl +c 停止..."
-            ssh -q "$HOST" "sudo tcpdump -s 0 -U -i any port $CAP_HOST_OR_PORT -w -" | wireshark -k -i -
-            return 0
-        fi
-
-        if [[ $CAP_TIME -gt 0 ]]; then
-            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); timeout $CAP_TIME sudo tcpdump -i any -w $REMOTE_FILE_NAME port $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
-        else
-            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); sudo tcpdump -i any -w $REMOTE_FILE_NAME port $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
-        fi
         ;;
-
     esac
-
+    
+    execute_ssh_tcpdump "$HOST" "$CAP_TIME" "$REMOTE_FILE_NAME" "$filter"
     RETVAL=$?
+    
     if [[ $RETVAL -eq 124 ]]; then
         echo "🔄 超时：tcpdump 超时退出" >&2
     elif [[ $RETVAL -ne 0 ]]; then
