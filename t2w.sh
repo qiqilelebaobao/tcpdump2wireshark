@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # =============================================================================
 # 函数名称: check_ip_or_port
@@ -104,6 +104,15 @@ open_file() {
     return 0
 }
 
+check_live() {
+    local input="$1"
+    if [[ "$input" =~ ^live$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 # =============================================================================
 # 函数名称: capture_and_open
 # 功能描述: 通过SSH在远程主机抓包，将pcap文件传输到本地并自动打开分析
@@ -123,16 +132,17 @@ open_file() {
 capture_and_open() {
 
     local HOST=${1:-"127.0.0.1"}
-    local CAP_HOST_OR_PORT=${2:-"127.0.0.1"}
+    local CAP_HOST_OR_PORT=${2:-""}
 
     local CAP_NAME
-    CAP_NAME=${HOST}_$(date +%F_%T)
+    CAP_NAME=${HOST}_$(date +%F_%H%M%S)
 
     local REMOTE_FILE_NAME="/tmp/${CAP_NAME}.pcap"
     local LOCAL_FILE_NAME="/tmp/${CAP_NAME}.pcap"
 
     local CAP_TIME=${3:-"0"}
     local SLEEP_TIME=${4:-"1"}
+    local IF_LIVE=${5:-"not_live"}
     local RETVAL=0
 
     check_wait_time_if_int "$CAP_TIME" || {
@@ -144,17 +154,36 @@ capture_and_open() {
         return 1
     }
 
+    check_live "$IF_LIVE"
+    local IS_LIVE=$?
+
     check_ip_or_port "$CAP_HOST_OR_PORT"
     local CHECK_RESULT=$?
 
     # phase1 capture
     case $CHECK_RESULT in
     0)
-        echo "❌ 输入失败: 输出参数应为IP地址或者端口" >&2
-        return 2
+        # echo "❌ 输入失败: 输入参数应为IP地址或者端口" >&2
+        if [[ $IS_LIVE -eq 0 ]]; then
+            echo "🎯 开始抓包: 实时抓包，持续进行，直到ctrl +c 停止..."
+            ssh -q "$HOST" "sudo tcpdump -s 0 -U -i any $CAP_HOST_OR_PORT -w -" | wireshark -k -i -
+            return 0
+        fi
+        if [[ $CAP_TIME -gt 0 ]]; then
+            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); timeout $CAP_TIME sudo tcpdump -i any -w $REMOTE_FILE_NAME $CAP_HOST_OR_PORT"
+        else
+            ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); sudo tcpdump -i any -w $REMOTE_FILE_NAME $CAP_HOST_OR_PORT"
+        fi
         ;;
     1)
         echo "🎯 开始抓包: 抓包IP $CAP_HOST_OR_PORT ，持续进行，直到ctrl +c 停止..."
+
+        if [[ $IS_LIVE -eq 0 ]]; then
+            echo "🎯 开始抓包: 实时抓包，持续进行，直到ctrl +c 停止..."
+            ssh -q "$HOST" "sudo tcpdump -s 0 -U -i any host $CAP_HOST_OR_PORT -w -" | wireshark -k -i -
+            return 0
+        fi
+
         if [[ $CAP_TIME -gt 0 ]]; then
             ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); timeout $CAP_TIME sudo tcpdump -i any -w $REMOTE_FILE_NAME host $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
         else
@@ -163,12 +192,19 @@ capture_and_open() {
         ;;
     2)
         echo "🎯 开始抓包: 抓包端口 $CAP_HOST_OR_PORT ，持续进行，直到ctrl +c 停止..."
+        if [[ $IS_LIVE -eq 0 ]]; then
+            echo "🎯 开始抓包: 实时抓包，持续进行，直到ctrl +c 停止..."
+            ssh -q "$HOST" "sudo tcpdump -s 0 -U -i any port $CAP_HOST_OR_PORT -w -" | wireshark -k -i -
+            return 0
+        fi
+
         if [[ $CAP_TIME -gt 0 ]]; then
             ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); timeout $CAP_TIME sudo tcpdump -i any -w $REMOTE_FILE_NAME port $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
         else
             ssh -q -tt "$HOST" "CLIENT_PORT=\$(env | grep SSH_CLIENT | awk '{print \$2}'); sudo tcpdump -i any -w $REMOTE_FILE_NAME port $CAP_HOST_OR_PORT and not port \$CLIENT_PORT"
         fi
         ;;
+
     esac
 
     RETVAL=$?
