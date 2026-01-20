@@ -38,17 +38,19 @@ Remote host requirements:
 
 Local machine requirements:
 
-- `scp` to copy the remote pcap
+- `scp` to copy the remote pcap (not needed for live mode)
 - A program to open pcap files (e.g., Wireshark)
-  - macOS: `open`
-  - Linux: `xdg-open`
+  - macOS: `open` (for file mode)
+  - Linux: `xdg-open` (for file mode)
+  - Live mode: `wireshark` must be installed and in PATH
 
 本地机要求：
 
-- `scp` 用于复制远程 pcap
+- `scp` 用于复制远程 pcap（实时模式不需要）
 - 可打开 pcap 文件的程序（例如 Wireshark）
-  - macOS: `open`
-  - Linux: `xdg-open`
+  - macOS: `open`（文件模式）
+  - Linux: `xdg-open`（文件模式）
+  - 实时模式：必须安装 `wireshark` 并在 PATH 中
 
 Shell notes / Shell 要点
 
@@ -63,13 +65,13 @@ The script performs minimal checks on the `SHELL` environment variable. Running 
 Basic syntax:
 
 ```bash
-./t2w.sh [REMOTE_HOST] [TARGET_IP_OR_PORT] [CAPTURE_TIME_SECONDS] [OPEN_WAIT_SECONDS]
+./t2w.sh [REMOTE_HOST] [TARGET_IP_OR_PORT] [CAPTURE_TIME_SECONDS] [OPEN_WAIT_SECONDS] [LIVE_MODE]
 ```
 
 基本语法：
 
 ```bash
-./t2w.sh [REMOTE_HOST] [TARGET_IP_OR_PORT] [CAPTURE_TIME_SECONDS] [OPEN_WAIT_SECONDS]
+./t2w.sh [REMOTE_HOST] [TARGET_IP_OR_PORT] [CAPTURE_TIME_SECONDS] [OPEN_WAIT_SECONDS] [LIVE_MODE]
 ```
 
 Parameters / 参数说明
@@ -77,14 +79,16 @@ Parameters / 参数说明
 - REMOTE_HOST: remote host address or hostname (optional, default `127.0.0.1`)
 - TARGET_IP_OR_PORT: capture target; an IPv4 address or a port number (optional, default `127.0.0.1`)
 - CAPTURE_TIME_SECONDS: capture duration in seconds. Use `0` to capture until stopped with Ctrl+C (optional, default `0`)
-- OPEN_WAIT_SECONDS: seconds to wait before opening the file. Currently validated but not actively used (reserved for future use) (optional, default `3`)
+- OPEN_WAIT_SECONDS: seconds to wait before opening the file (optional, default `1`)
+- LIVE_MODE: set to `live` to enable real-time streaming to Wireshark without saving to disk (optional, default `not_live`)
 
 参数说明
 
 - REMOTE_HOST：远程主机地址或主机名（可选，默认 `127.0.0.1`）
 - TARGET_IP_OR_PORT：抓包目标，IPv4 地址或端口号（可选，默认 `127.0.0.1`）
 - CAPTURE_TIME_SECONDS：抓包时长（秒）。使用 `0` 表示直到 Ctrl+C 停止（可选，默认 `0`）
-- OPEN_WAIT_SECONDS：在打开文件前等待的秒数。当前会校验为整数，但流程中未使用（保留以备将来扩展）（可选，默认 `3`）
+- OPEN_WAIT_SECONDS：在打开文件前等待的秒数（可选，默认 `1`）
+- LIVE_MODE：设置为 `live` 启用实时流式传输到 Wireshark，不保存到磁盘（可选，默认 `not_live`）
 
 Examples / 示例
 
@@ -97,6 +101,9 @@ Examples / 示例
 
 # Local default host: capture localhost 127.0.0.1 until Ctrl+C
 ./t2w.sh
+
+# Real-time streaming: stream port 80 traffic directly to Wireshark without saving
+./t2w.sh example.com 80 0 1 live
 ```
 
 ```bash
@@ -108,6 +115,9 @@ Examples / 示例
 
 # 本地默认主机：抓取本机 127.0.0.1 的流量直到 Ctrl+C
 ./t2w.sh
+
+# 实时流式传输：将端口 80 的流量直接流式传输到 Wireshark，不保存到磁盘
+./t2w.sh example.com 80 0 1 live
 ```
 
 ---
