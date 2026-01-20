@@ -70,7 +70,7 @@ validate_integer_parameter() {
     local param_description="$2"
     
     check_wait_time_if_int "$value" || {
-        echo "❌ 输入失败: $param_description 应为正整数，但输入的是 $value" >&2
+        echo "❌ 输入失败: $param_description 应为正整数，但输入的是 \"$value\"" >&2
         return 1
     }
     return 0
@@ -205,7 +205,7 @@ execute_ssh_tcpdump() {
         timeout_cmd="timeout $cap_time"
     fi
     
-    ssh -q -tt "$host" "CLIENT_PORT=\$(echo \$SSH_CLIENT | awk '{print \$2}'); $timeout_cmd sudo tcpdump -i any -w $remote_file $filter"
+    ssh -q -tt "$host" "CLIENT_PORT=\$(echo \"\$SSH_CLIENT\" | awk '{print \$2}'); [ -n \"\$CLIENT_PORT\" ] || CLIENT_PORT=0; $timeout_cmd sudo tcpdump -i any -w $remote_file $filter"
 }
 
 # =============================================================================
