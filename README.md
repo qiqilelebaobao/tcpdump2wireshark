@@ -122,6 +122,14 @@ Examples / 示例
 
 ---
 
+## Similar Projects / 相似项目
+
+Looking for alternatives or similar tools? Check out [SIMILAR_REPOSITORIES.md](SIMILAR_REPOSITORIES.md) for a curated list of repositories with similar functionality including remote packet capture, network analysis, and SSH-based tools.
+
+想找替代工具或相似项目？查看 [SIMILAR_REPOSITORIES.md](SIMILAR_REPOSITORIES.md) 获取包括远程抓包、网络分析和基于 SSH 工具的精选仓库列表。
+
+---
+
 ## Contributing / 致谢与贡献
 
 Contributions, bug reports, and enhancements are welcome. Please open an issue before submitting a pull request to discuss major changes.
