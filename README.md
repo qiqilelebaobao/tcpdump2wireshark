@@ -112,14 +112,6 @@ Examples / 示例
 
 ---
 
-## Security & Recommendations / 安全与建议
-
-The script uses timestamped filenames which may include colons (`:`). These characters can be incompatible with some filesystems (e.g., Windows). For cross-platform compatibility, consider using a timestamp format without colons.
-
-脚本使用带时间戳的文件名，可能包含冒号（`:`）。某些文件系统（如 Windows）不兼容冒号。若需跨平台兼容，建议使用不含冒号的时间戳格式。
-
----
-
 ## Contributing / 致谢与贡献
 
 Contributions, bug reports, and enhancements are welcome. Please open an issue before submitting a pull request to discuss major changes.
