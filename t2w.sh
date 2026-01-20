@@ -70,7 +70,7 @@ validate_integer_parameter() {
     local param_description="$2"
     
     check_wait_time_if_int "$value" || {
-        echo "❌ 输入失败: $param_description 应为正整数 $value" >&2
+        echo "❌ 输入失败: $param_description 应为正整数，但输入的是 \"$value\"" >&2
         return 1
     }
     return 0
