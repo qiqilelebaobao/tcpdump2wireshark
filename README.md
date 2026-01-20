@@ -77,7 +77,7 @@ Basic syntax:
 Parameters / 参数说明
 
 - REMOTE_HOST: remote host address or hostname (optional, default `127.0.0.1`)
-- TARGET_IP_OR_PORT: capture target; an IPv4 address or a port number (optional, default `127.0.0.1`)
+- TARGET_IP_OR_PORT: capture target; an IPv4 address or a port number (optional, default: capture all traffic)
 - CAPTURE_TIME_SECONDS: capture duration in seconds. Use `0` to capture until stopped with Ctrl+C (optional, default `0`)
 - OPEN_WAIT_SECONDS: seconds to wait before opening the file (optional, default `1`)
 - LIVE_MODE: set to `live` to enable real-time streaming to Wireshark without saving to disk (optional, default `not_live`)
@@ -85,7 +85,7 @@ Parameters / 参数说明
 参数说明
 
 - REMOTE_HOST：远程主机地址或主机名（可选，默认 `127.0.0.1`）
-- TARGET_IP_OR_PORT：抓包目标，IPv4 地址或端口号（可选，默认 `127.0.0.1`）
+- TARGET_IP_OR_PORT：抓包目标，IPv4 地址或端口号（可选，默认：抓取所有流量）
 - CAPTURE_TIME_SECONDS：抓包时长（秒）。使用 `0` 表示直到 Ctrl+C 停止（可选，默认 `0`）
 - OPEN_WAIT_SECONDS：在打开文件前等待的秒数（可选，默认 `1`）
 - LIVE_MODE：设置为 `live` 启用实时流式传输到 Wireshark，不保存到磁盘（可选，默认 `not_live`）
