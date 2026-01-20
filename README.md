@@ -1,6 +1,7 @@
 # tcpdump2wireshark
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Validation](https://github.com/qiqilelebaobao/tcpdump2wireshark/actions/workflows/validation.yml/badge.svg)](https://github.com/qiqilelebaobao/tcpdump2wireshark/actions/workflows/validation.yml)
 [![GitHub stars](https://img.shields.io/github/stars/qiqilelebaobao/tcpdump2wireshark?style=social)](https://github.com/qiqilelebaobao/tcpdump2wireshark/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/qiqilelebaobao/tcpdump2wireshark)](https://github.com/qiqilelebaobao/tcpdump2wireshark/issues)
 [![GitHub forks](https://img.shields.io/github/forks/qiqilelebaobao/tcpdump2wireshark?style=social)](https://github.com/qiqilelebaobao/tcpdump2wireshark/network)

@@ -1,0 +1,47 @@
+name: Validation
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Run ShellCheck
+      uses: ludeeus/action-shellcheck@master
+      with:
+        scandir: '.'
+        severity: warning
+        
+  test-script:
+    name: Test Script Syntax
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Test bash syntax
+      run: |
+        bash -n t2w.sh
+        echo "✅ Script syntax is valid"
+        
+  markdown-lint:
+    name: Markdown Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Lint markdown files
+      uses: actionshub/markdownlint@main
+      continue-on-error: true
